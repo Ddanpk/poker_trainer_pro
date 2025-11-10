@@ -1,0 +1,13 @@
+{
+  "name": "poker-trainer-pro",
+  "version": "1.0.0",
+  "description": "PokerTrainer Pro - Cash Game Training Platform",
+  "private": true,
+  "scripts": {
+    "dev": "cd client && npm run dev",
+    "build": "cd client && npm run build",
+    "preview": "cd client && npm run preview"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

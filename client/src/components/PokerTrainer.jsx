@@ -239,36 +239,72 @@ export default function PokerTrainer() {
 
               {/* Positions */}
               <div className="table-position utg">
+                {position !== 'UTG' && (
+                  <div className="villain-cards">
+                    <div className="card-back"></div>
+                    <div className="card-back"></div>
+                  </div>
+                )}
                 <div className={`position-marker ${position === 'UTG' ? 'active' : ''} ${aggressor === 'UTG' ? 'aggressor' : ''}`}>
                   UTG
                   <span className="stack">100bb</span>
                 </div>
               </div>
               <div className="table-position hj">
+                {position !== 'HJ' && (
+                  <div className="villain-cards">
+                    <div className="card-back"></div>
+                    <div className="card-back"></div>
+                  </div>
+                )}
                 <div className={`position-marker ${position === 'HJ' ? 'active' : ''} ${aggressor === 'HJ' ? 'aggressor' : ''}`}>
                   HJ
                   <span className="stack">100bb</span>
                 </div>
               </div>
               <div className="table-position co">
+                {position !== 'CO' && (
+                  <div className="villain-cards">
+                    <div className="card-back"></div>
+                    <div className="card-back"></div>
+                  </div>
+                )}
                 <div className={`position-marker ${position === 'CO' ? 'active' : ''} ${aggressor === 'CO' ? 'aggressor' : ''}`}>
                   CO
                   <span className="stack">100bb</span>
                 </div>
               </div>
               <div className="table-position btn">
+                {position !== 'BTN' && (
+                  <div className="villain-cards">
+                    <div className="card-back"></div>
+                    <div className="card-back"></div>
+                  </div>
+                )}
                 <div className={`position-marker ${position === 'BTN' ? 'active' : ''} ${aggressor === 'BTN' ? 'aggressor' : ''}`}>
                   BTN
                   <span className="stack">100bb</span>
                 </div>
               </div>
               <div className="table-position sb">
+                {position !== 'SB' && (
+                  <div className="villain-cards">
+                    <div className="card-back"></div>
+                    <div className="card-back"></div>
+                  </div>
+                )}
                 <div className={`position-marker ${position === 'SB' ? 'active' : ''} ${aggressor === 'SB' ? 'aggressor' : ''}`}>
                   SB
                   <span className="stack">100bb</span>
                 </div>
               </div>
               <div className="table-position bb">
+                {position !== 'BB' && (
+                  <div className="villain-cards">
+                    <div className="card-back"></div>
+                    <div className="card-back"></div>
+                  </div>
+                )}
                 <div className={`position-marker ${position === 'BB' ? 'active' : ''} ${aggressor === 'BB' ? 'aggressor' : ''}`}>
                   BB
                   <span className="stack">100bb</span>

@@ -277,36 +277,37 @@
 }
 
 .table-position.utg {
-  left: 20px;
-  top: 55%;
+  left: 10px;
+  top: 50%;
   transform: translateY(-50%);
 }
 
 .table-position.hj {
-  left: 80px;
-  top: 20%;
+  left: 60px;
+  top: 10%;
 }
 
 .table-position.co {
   left: 50%;
-  top: 0px;
+  top: -10px;
   transform: translateX(-50%);
 }
 
 .table-position.btn {
-  right: 80px;
-  top: 20%;
+  right: 60px;
+  top: 10%;
 }
 
 .table-position.sb {
-  right: 20px;
-  top: 55%;
+  right: 10px;
+  top: 50%;
   transform: translateY(-50%);
 }
 
 .table-position.bb {
-  right: 80px;
-  bottom: 20%;
+  left: 50%;
+  bottom: -10px;
+  transform: translateX(-50%);
 }
 
 .position-marker {

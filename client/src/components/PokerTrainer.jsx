@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import '../styles/PokerTrainer.css'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+const API_URL = import.meta.env.VITE_API_URL || ''
 
 export default function PokerTrainer() {
   const [currentHand, setCurrentHand] = useState(null)

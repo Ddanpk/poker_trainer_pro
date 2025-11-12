@@ -89,7 +89,12 @@ export default function PokerTrainer() {
   // Renderizar cartas
   const renderCard = (rank, suit) => {
     const suitSymbols = { h: '♥', d: '♦', s: '♠', c: '♣' }
-    const suitColors = { h: '#e74c3c', d: '#e74c3c', s: '#2c3e50', c: '#2c3e50' }
+    const suitColors = { 
+      h: '#e74c3c',  // Copas = Vermelho
+      d: '#3498db',  // Ouros = Azul
+      s: '#2c3e50',  // Espadas = Preto
+      c: '#27ae60'   // Paus = Verde
+    }
     
     return (
       <div className="poker-card" style={{ color: suitColors[suit] }}>

@@ -358,11 +358,12 @@
 
 .hero-cards {
   position: absolute;
-  bottom: 80px;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   display: flex;
   gap: var(--spacing-md);
+  z-index: 10;
 }
 
 .poker-card {

@@ -1,195 +1,358 @@
 import { useState, useEffect } from 'react'
 import '../styles/PokerTrainer.css'
 
-const POSITIONS = ['UTG', 'HJ', 'CO', 'BTN', 'SB', 'BB']
-const ACTIONS = ['Fold', 'Call', 'Raise']
-
-// Mãos de poker em ordem de força
-const ALL_HANDS = [
-  'AA', 'KK', 'QQ', 'JJ', 'TT', '99', '88', '77', '66', '55', '44', '33', '22',
-  'AKs', 'AQs', 'AJs', 'ATs', 'A9s', 'A8s', 'A7s', 'A6s', 'A5s', 'A4s', 'A3s', 'A2s',
-  'KQs', 'KJs', 'KTs', 'K9s', 'K8s', 'K7s', 'K6s', 'K5s', 'K4s', 'K3s', 'K2s',
-  'QJs', 'QTs', 'Q9s', 'Q8s', 'Q7s', 'Q6s', 'Q5s', 'Q4s', 'Q3s', 'Q2s',
-  'JTs', 'J9s', 'J8s', 'J7s', 'J6s', 'J5s', 'J4s', 'J3s', 'J2s',
-  'T9s', 'T8s', 'T7s', 'T6s', 'T5s', 'T4s', 'T3s', 'T2s',
-  '98s', '97s', '96s', '95s', '94s', '93s', '92s',
-  '87s', '86s', '85s', '84s', '83s', '82s',
-  '76s', '75s', '74s', '73s', '72s',
-  '65s', '64s', '63s', '62s',
-  '54s', '53s', '52s',
-  '43s', '42s',
-  '32s',
-  'AKo', 'AQo', 'AJo', 'ATo', 'A9o', 'A8o', 'A7o', 'A6o', 'A5o', 'A4o', 'A3o', 'A2o',
-  'KQo', 'KJo', 'KTo', 'K9o', 'K8o', 'K7o', 'K6o', 'K5o', 'K4o', 'K3o', 'K2o',
-  'QJo', 'QTo', 'Q9o', 'Q8o', 'Q7o', 'Q6o', 'Q5o', 'Q4o', 'Q3o', 'Q2o',
-  'JTo', 'J9o', 'J8o', 'J7o', 'J6o', 'J5o', 'J4o', 'J3o', 'J2o',
-  'T9o', 'T8o', 'T7o', 'T6o', 'T5o', 'T4o', 'T3o', 'T2o',
-  '98o', '97o', '96o', '95o', '94o', '93o', '92o',
-  '87o', '86o', '85o', '84o', '83o', '82o',
-  '76o', '75o', '74o', '73o', '72o',
-  '65o', '64o', '63o', '62o',
-  '54o', '53o', '52o',
-  '43o', '42o',
-  '32o'
-]
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
 export default function PokerTrainer() {
-  const [position, setPosition] = useState('UTG')
   const [currentHand, setCurrentHand] = useState(null)
-  const [userAnswer, setUserAnswer] = useState(null)
+  const [scenario, setScenario] = useState('RFI')
+  const [position, setPosition] = useState('CO')
+  const [aggressor, setAggressor] = useState(null)
+  const [userAction, setUserAction] = useState(null)
   const [feedback, setFeedback] = useState(null)
-  const [stats, setStats] = useState({ correct: 0, total: 0, score: 0 })
-  const [ranges, setRanges] = useState({})
-  const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState({ correct: 0, total: 0 })
+  const [loading, setLoading] = useState(false)
+  const [scenarios, setScenarios] = useState([])
 
-  // Carregar ranges do servidor
+  // Carregar cenários disponíveis
   useEffect(() => {
-    fetch('/poker_ranges.json')
+    fetch(`${API_URL}/api/scenarios`)
       .then(res => res.json())
-      .then(data => {
-        setRanges(data)
-        setLoading(false)
-        generateNewHand(data, position)
-      })
-      .catch(err => {
-        console.error('Erro ao carregar ranges:', err)
-        setLoading(false)
-      })
+      .then(data => setScenarios(data))
+      .catch(err => console.error('Erro ao carregar cenários:', err))
   }, [])
 
-  const generateNewHand = (rangesData, pos) => {
-    const randomHand = ALL_HANDS[Math.floor(Math.random() * ALL_HANDS.length)]
-    setCurrentHand(randomHand)
-    setUserAnswer(null)
+  // Carregar nova mão
+  const loadNewHand = async () => {
+    setLoading(true)
+    setUserAction(null)
     setFeedback(null)
+
+    try {
+      const params = new URLSearchParams({
+        cenario: scenario,
+        posicao_ativa: position
+      })
+      
+      if (aggressor) {
+        params.append('posicao_agressora', aggressor)
+      }
+
+      const response = await fetch(`${API_URL}/api/training/random-hand?${params}`)
+      const data = await response.json()
+      
+      setCurrentHand(data)
+    } catch (error) {
+      console.error('Erro ao carregar mão:', error)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const getCorrectAction = (hand, pos) => {
-    if (!ranges[pos] || !ranges[pos].hands[hand]) {
-      return 'Raise' // Default
+  // Verificar ação do usuário
+  const checkAction = async (action) => {
+    if (!currentHand || userAction) return
+
+    setUserAction(action)
+
+    try {
+      const response = await fetch(`${API_URL}/api/training/check-action`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          hand: currentHand.hand,
+          cenario: scenario,
+          posicao_ativa: position,
+          posicao_agressora: aggressor,
+          user_action: action
+        })
+      })
+
+      const result = await response.json()
+      setFeedback(result)
+
+      // Atualizar estatísticas
+      setStats(prev => ({
+        correct: prev.correct + (result.correct ? 1 : 0),
+        total: prev.total + 1
+      }))
+    } catch (error) {
+      console.error('Erro ao verificar ação:', error)
+    }
+  }
+
+  // Carregar primeira mão ao montar
+  useEffect(() => {
+    loadNewHand()
+  }, [scenario, position, aggressor])
+
+  // Renderizar cartas
+  const renderCard = (rank, suit) => {
+    const suitSymbols = { h: '♥', d: '♦', s: '♠', c: '♣' }
+    const suitColors = { h: '#e74c3c', d: '#e74c3c', s: '#2c3e50', c: '#2c3e50' }
+    
+    return (
+      <div className="poker-card" style={{ color: suitColors[suit] }}>
+        <div className="card-corner top">
+          <div className="card-rank">{rank}</div>
+          <div className="card-suit">{suitSymbols[suit]}</div>
+        </div>
+        <div className="card-center">
+          <div className="card-suit-large">{suitSymbols[suit]}</div>
+        </div>
+        <div className="card-corner bottom">
+          <div className="card-rank">{rank}</div>
+          <div className="card-suit">{suitSymbols[suit]}</div>
+        </div>
+      </div>
+    )
+  }
+
+  // Parsear mão para cartas
+  const parseHand = (hand) => {
+    if (!hand) return []
+    
+    // Exemplos: AKs, 72o, QQ
+    const ranks = hand.replace(/[so]/g, '').split('')
+    const suited = hand.includes('s')
+    const pair = ranks[0] === ranks[1]
+    
+    if (pair) {
+      return [
+        { rank: ranks[0], suit: 'h' },
+        { rank: ranks[1], suit: 's' }
+      ]
     }
     
-    const frequency = ranges[pos].hands[hand]
-    if (frequency >= 80) return 'Raise'
-    if (frequency >= 40) return 'Call'
-    return 'Fold'
+    return [
+      { rank: ranks[0], suit: suited ? 's' : 'h' },
+      { rank: ranks[1], suit: suited ? 's' : 'd' }
+    ]
   }
 
-  const handleAnswer = (action) => {
-    const correctAction = getCorrectAction(currentHand, position)
-    const isCorrect = action === correctAction
-    
-    setUserAnswer(action)
-    setFeedback({
-      correct: isCorrect,
-      userAction: action,
-      correctAction: correctAction,
-      hand: currentHand,
-      position: position
-    })
-
-    setStats(prev => ({
-      correct: prev.correct + (isCorrect ? 1 : 0),
-      total: prev.total + 1,
-      score: ((prev.correct + (isCorrect ? 1 : 0)) / (prev.total + 1) * 100).toFixed(1)
-    }))
-  }
-
-  const handleNextHand = () => {
-    generateNewHand(ranges, position)
-  }
-
-  const handlePositionChange = (newPos) => {
-    setPosition(newPos)
-    generateNewHand(ranges, newPos)
-    setStats({ correct: 0, total: 0, score: 0 })
-  }
-
-  if (loading) {
-    return <div className="trainer-container"><p>Carregando ranges...</p></div>
-  }
+  const cards = currentHand ? parseHand(currentHand.hand) : []
+  const accuracy = stats.total > 0 ? ((stats.correct / stats.total) * 100).toFixed(1) : 0
 
   return (
-    <div className="trainer-container">
+    <div className="poker-trainer">
+      {/* Header */}
       <header className="trainer-header">
-        <h1>🎰 PokerTrainer Pro</h1>
-        <p>Treine sua estratégia pré-flop em cash games 6-max</p>
+        <div className="header-left">
+          <h1 className="logo">♠️ PokerTrainer Pro</h1>
+          <p className="subtitle">Cash Game 6-Max Training • 100bb Deep</p>
+        </div>
+        <div className="header-right">
+          <div className="stat-box">
+            <span className="stat-label">Mãos</span>
+            <span className="stat-value">{stats.total}</span>
+          </div>
+          <div className="stat-box success">
+            <span className="stat-label">Acertos</span>
+            <span className="stat-value">{stats.correct}</span>
+          </div>
+          <div className="stat-box warning">
+            <span className="stat-label">Precisão</span>
+            <span className="stat-value">{accuracy}%</span>
+          </div>
+        </div>
       </header>
 
+      {/* Main Content */}
       <div className="trainer-content">
-        {/* Seletor de Posição */}
-        <div className="position-selector">
-          <h3>Selecione a Posição:</h3>
-          <div className="position-buttons">
-            {POSITIONS.map(pos => (
-              <button
-                key={pos}
-                className={`position-btn ${position === pos ? 'active' : ''}`}
-                onClick={() => handlePositionChange(pos)}
-              >
-                {pos}
-              </button>
-            ))}
+        {/* Sidebar */}
+        <aside className="trainer-sidebar">
+          <div className="sidebar-section">
+            <h3>Cenário</h3>
+            <select 
+              value={scenario} 
+              onChange={(e) => setScenario(e.target.value)}
+              className="select-input"
+            >
+              <option value="RFI">RFI (Open Raise)</option>
+              <option value="BB">BB Defense</option>
+              <option value="3B">Facing 3-Bet</option>
+              <option value="4B">Facing 4-Bet</option>
+            </select>
           </div>
-        </div>
 
-        {/* Área Principal do Trainer */}
-        <div className="trainer-main">
-          {currentHand && (
-            <>
-              <div className="hand-display">
-                <h2>Sua Mão:</h2>
-                <div className="hand-card">
-                  <span className="hand-text">{currentHand}</span>
-                </div>
-              </div>
+          <div className="sidebar-section">
+            <h3>Sua Posição</h3>
+            <div className="position-grid">
+              {['UTG', 'HJ', 'CO', 'BTN', 'SB', 'BB'].map(pos => (
+                <button
+                  key={pos}
+                  className={`position-btn ${position === pos ? 'active' : ''}`}
+                  onClick={() => setPosition(pos)}
+                >
+                  {pos}
+                </button>
+              ))}
+            </div>
+          </div>
 
-              <div className="action-buttons">
-                <h3>Qual é a ação correta?</h3>
-                <div className="buttons-grid">
-                  {ACTIONS.map(action => (
-                    <button
-                      key={action}
-                      className={`action-btn action-${action.toLowerCase()} ${userAnswer === action ? 'selected' : ''}`}
-                      onClick={() => handleAnswer(action)}
-                      disabled={userAnswer !== null}
-                    >
-                      {action}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {feedback && (
-                <div className={`feedback ${feedback.correct ? 'correct' : 'incorrect'}`}>
-                  <h4>{feedback.correct ? '✓ Correto!' : '✗ Incorreto'}</h4>
-                  <p>Sua resposta: <strong>{feedback.userAction}</strong></p>
-                  <p>Resposta correta: <strong>{feedback.correctAction}</strong></p>
-                  <p>Mão: <strong>{feedback.hand}</strong> em <strong>{feedback.position}</strong></p>
-                  <button className="next-btn" onClick={handleNextHand}>
-                    Próxima Mão →
+          {scenario !== 'RFI' && (
+            <div className="sidebar-section">
+              <h3>Agressor</h3>
+              <div className="position-grid">
+                {['UTG', 'HJ', 'CO', 'BTN', 'SB', 'BB'].map(pos => (
+                  <button
+                    key={pos}
+                    className={`position-btn ${aggressor === pos ? 'active' : ''}`}
+                    onClick={() => setAggressor(pos)}
+                  >
+                    {pos}
                   </button>
-                </div>
-              )}
-            </>
+                ))}
+              </div>
+            </div>
           )}
-        </div>
 
-        {/* Estatísticas */}
-        <div className="stats-panel">
-          <h3>Estatísticas</h3>
-          <div className="stat-item">
-            <span>Corretas:</span>
-            <strong>{stats.correct}/{stats.total}</strong>
+          <div className="sidebar-section">
+            <h3>Estatísticas</h3>
+            <div className="stats-detail">
+              <div className="stat-row">
+                <span>Total:</span>
+                <span>{stats.total}</span>
+              </div>
+              <div className="stat-row">
+                <span>Corretas:</span>
+                <span className="text-success">{stats.correct}</span>
+              </div>
+              <div className="stat-row">
+                <span>Erradas:</span>
+                <span className="text-error">{stats.total - stats.correct}</span>
+              </div>
+            </div>
           </div>
-          <div className="stat-item">
-            <span>Taxa de Acerto:</span>
-            <strong>{stats.score}%</strong>
+        </aside>
+
+        {/* Main Area */}
+        <main className="trainer-main">
+          {/* Poker Table */}
+          <div className="poker-table-container">
+            <div className="poker-table">
+              {/* Logo e Texto Central */}
+              <div className="table-center-logo">
+                <img src="/metagame-logo.png" alt="Metagame" />
+                <div className="table-center-text">TRAINER METAGAME</div>
+              </div>
+              {/* Positions */}
+              <div className="table-position utg">
+                <div className={`position-marker ${position === 'UTG' ? 'active' : ''} ${aggressor === 'UTG' ? 'aggressor' : ''}`}>
+                  UTG
+                  <span className="stack">100bb</span>
+                </div>
+              </div>
+              <div className="table-position hj">
+                <div className={`position-marker ${position === 'HJ' ? 'active' : ''} ${aggressor === 'HJ' ? 'aggressor' : ''}`}>
+                  HJ
+                  <span className="stack">100bb</span>
+                </div>
+              </div>
+              <div className="table-position co">
+                <div className={`position-marker ${position === 'CO' ? 'active' : ''} ${aggressor === 'CO' ? 'aggressor' : ''}`}>
+                  CO
+                  <span className="stack">100bb</span>
+                </div>
+              </div>
+              <div className="table-position btn">
+                <div className={`position-marker ${position === 'BTN' ? 'active' : ''} ${aggressor === 'BTN' ? 'aggressor' : ''}`}>
+                  BTN
+                  <span className="stack">100bb</span>
+                </div>
+              </div>
+              <div className="table-position sb">
+                <div className={`position-marker ${position === 'SB' ? 'active' : ''} ${aggressor === 'SB' ? 'aggressor' : ''}`}>
+                  SB
+                  <span className="stack">100bb</span>
+                </div>
+              </div>
+              <div className="table-position bb">
+                <div className={`position-marker ${position === 'BB' ? 'active' : ''} ${aggressor === 'BB' ? 'aggressor' : ''}`}>
+                  BB
+                  <span className="stack">100bb</span>
+                </div>
+              </div>
+
+              {/* Cards */}
+              <div className="hero-cards">
+                {loading ? (
+                  <div className="loading">Carregando...</div>
+                ) : cards.length > 0 ? (
+                  <>
+                    {renderCard(cards[0].rank, cards[0].suit)}
+                    {renderCard(cards[1].rank, cards[1].suit)}
+                  </>
+                ) : null}
+              </div>
+            </div>
           </div>
-          <div className="progress-bar">
-            <div className="progress-fill" style={{ width: `${stats.score}%` }}></div>
+
+          {/* Situation */}
+          <div className="situation-box">
+            {currentHand && (
+              <p className="situation-text">
+                {scenario === 'RFI' && `Todos foldaram para você no ${position}. Ação em você.`}
+                {scenario === 'BB' && aggressor && `${aggressor} abriu para 2.5bb. Ação em você no ${position}.`}
+                {scenario === '3B' && aggressor && `Você abriu, ${aggressor} fez 3-BET. Ação em você.`}
+                {scenario === '4B' && aggressor && `Você 3-betou, ${aggressor} fez 4-BET. Ação em você.`}
+              </p>
+            )}
           </div>
-        </div>
+
+          {/* Action Buttons */}
+          <div className="action-buttons">
+            <button
+              className="action-btn fold"
+              onClick={() => checkAction('FOLD')}
+              disabled={!currentHand || userAction}
+            >
+              FOLD
+            </button>
+            {scenario === 'BB' && (
+              <button
+                className="action-btn call"
+                onClick={() => checkAction('CALL')}
+                disabled={!currentHand || userAction}
+              >
+                CALL
+              </button>
+            )}
+            <button
+              className="action-btn raise"
+              onClick={() => checkAction('3BET')}
+              disabled={!currentHand || userAction}
+            >
+              {scenario === 'RFI' ? 'RAISE 2.5bb' : '3-BET'}
+            </button>
+          </div>
+
+          {/* Feedback */}
+          {feedback && (
+            <div className={`feedback-box ${feedback.correct ? 'correct' : 'incorrect'}`}>
+              <div className="feedback-header">
+                {feedback.correct ? '✅ Correto!' : '❌ Incorreto!'}
+              </div>
+              <div className="feedback-body">
+                <p>
+                  {currentHand.hand} no {scenario} {position}
+                  {aggressor && ` vs ${aggressor}`}
+                </p>
+                <p className="feedback-action">
+                  Ação correta: <strong>{feedback.correct_action}</strong>
+                </p>
+                {!feedback.correct && (
+                  <p className="feedback-user">
+                    Você escolheu: <strong>{feedback.user_action}</strong>
+                  </p>
+                )}
+              </div>
+              <button className="next-hand-btn" onClick={loadNewHand}>
+                Próxima Mão →
+              </button>
+            </div>
+          )}
+        </main>
       </div>
     </div>
   )

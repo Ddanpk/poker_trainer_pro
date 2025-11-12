@@ -231,11 +231,7 @@ export default function PokerTrainer() {
           {/* Poker Table */}
           <div className="poker-table-container">
             <div className="poker-table">
-              {/* Logo e Texto Central */}
-              <div className="table-center-logo">
-                <img src="/metagame-logo.png" alt="Metagame" />
-                <div className="table-center-text">TRAINER METAGAME</div>
-              </div>
+
               {/* Positions */}
               <div className="table-position utg">
                 <div className={`position-marker ${position === 'UTG' ? 'active' : ''} ${aggressor === 'UTG' ? 'aggressor' : ''}`}>

@@ -277,36 +277,36 @@
 }
 
 .table-position.utg {
-  left: 50px;
-  top: 50%;
+  left: 20px;
+  top: 55%;
   transform: translateY(-50%);
 }
 
 .table-position.hj {
-  left: 100px;
-  top: 15%;
+  left: 80px;
+  top: 20%;
 }
 
 .table-position.co {
   left: 50%;
-  top: 5%;
+  top: 0px;
   transform: translateX(-50%);
 }
 
 .table-position.btn {
-  right: 100px;
-  top: 15%;
+  right: 80px;
+  top: 20%;
 }
 
 .table-position.sb {
-  right: 50px;
-  top: 50%;
+  right: 20px;
+  top: 55%;
   transform: translateY(-50%);
 }
 
 .table-position.bb {
-  right: 100px;
-  bottom: 15%;
+  right: 80px;
+  bottom: 20%;
 }
 
 .position-marker {
@@ -667,4 +667,27 @@
   transform: translate(-50%, -50%);
   font-size: 20px;
   color: rgba(255, 255, 255, 0.3);
+}
+
+/* Start Button */
+.start-btn {
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border: none;
+  border-radius: 0.5rem;
+  color: white;
+  font-size: 1.125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.start-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+.start-btn:active {
+  transform: translateY(0);
 }

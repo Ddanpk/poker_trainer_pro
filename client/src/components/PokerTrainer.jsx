@@ -81,9 +81,11 @@ export default function PokerTrainer() {
     }
   }
 
-  // Carregar primeira mão ao montar
+  // Recarregar quando mudar configuração (mas não ao montar)
   useEffect(() => {
-    loadNewHand()
+    if (currentHand) {
+      loadNewHand()
+    }
   }, [scenario, position, aggressor])
 
   // Renderizar cartas
@@ -327,13 +329,19 @@ export default function PokerTrainer() {
 
           {/* Situation */}
           <div className="situation-box">
-            {currentHand && (
+            {!currentHand && !loading ? (
+              <button className="start-btn" onClick={loadNewHand}>
+                🎰 Iniciar Treino
+              </button>
+            ) : currentHand ? (
               <p className="situation-text">
                 {scenario === 'RFI' && `Todos foldaram para você no ${position}. Ação em você.`}
                 {scenario === 'BB' && aggressor && `${aggressor} abriu para 2.5bb. Ação em você no ${position}.`}
                 {scenario === '3B' && aggressor && `Você abriu, ${aggressor} fez 3-BET. Ação em você.`}
                 {scenario === '4B' && aggressor && `Você 3-betou, ${aggressor} fez 4-BET. Ação em você.`}
               </p>
+            ) : (
+              <p className="situation-text">Carregando...</p>
             )}
           </div>
 

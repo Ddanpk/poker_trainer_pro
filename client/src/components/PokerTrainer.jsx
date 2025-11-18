@@ -354,7 +354,7 @@ export default function PokerTrainer() {
             >
               FOLD
             </button>
-            {scenario === 'BB' && (
+            {(scenario === 'BB' || scenario === '4B') && (
               <button
                 className="action-btn call"
                 onClick={() => checkAction('CALL')}
@@ -365,10 +365,18 @@ export default function PokerTrainer() {
             )}
             <button
               className="action-btn raise"
-              onClick={() => checkAction('3BET')}
+              onClick={() => checkAction(
+                scenario === 'RFI' ? 'OPEN' :
+                scenario === 'BB' ? '3BET' :
+                scenario === '3B' ? '4BET' :
+                scenario === '4B' ? '5BET' : 'RAISE'
+              )}
               disabled={!currentHand || userAction}
             >
-              {scenario === 'RFI' ? 'RAISE 2.5bb' : '3-BET'}
+              {scenario === 'RFI' ? 'RAISE 2.5bb' :
+               scenario === 'BB' ? '3-BET' :
+               scenario === '3B' ? '4-BET' :
+               scenario === '4B' ? '5-BET' : 'RAISE'}
             </button>
           </div>
 

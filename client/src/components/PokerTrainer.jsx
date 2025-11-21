@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import '../styles/PokerTrainer.css'
+import RangeGrid from './RangeGrid'
 
 const API_URL = import.meta.env.VITE_API_URL || ''
 
@@ -12,15 +13,31 @@ export default function PokerTrainer() {
   const [feedback, setFeedback] = useState(null)
   const [stats, setStats] = useState({ correct: 0, total: 0 })
   const [loading, setLoading] = useState(false)
-  const [scenarios, setScenarios] = useState([])
+  const [allRanges, setAllRanges] = useState([])
 
-  // Carregar cenários disponíveis
+  // Carregar todos os ranges da posição atual
   useEffect(() => {
-    fetch(`${API_URL}/api/scenarios`)
-      .then(res => res.json())
-      .then(data => setScenarios(data))
-      .catch(err => console.error('Erro ao carregar cenários:', err))
-  }, [])
+    const loadRanges = async () => {
+      try {
+        const params = new URLSearchParams({
+          cenario: scenario,
+          posicao_ativa: position
+        })
+        
+        if (aggressor) {
+          params.append('posicao_agressora', aggressor)
+        }
+
+        const response = await fetch(`${API_URL}/api/training/all-ranges?${params}`)
+        const data = await response.json()
+        setAllRanges(data)
+      } catch (error) {
+        console.error('Erro ao carregar ranges:', error)
+      }
+    }
+
+    loadRanges()
+  }, [scenario, position, aggressor])
 
   // Carregar nova mão
   const loadNewHand = async () => {
@@ -81,7 +98,7 @@ export default function PokerTrainer() {
     }
   }
 
-  // Recarregar quando mudar configuração (mas não ao montar)
+  // Recarregar quando mudar configuração
   useEffect(() => {
     if (currentHand) {
       loadNewHand()
@@ -92,10 +109,10 @@ export default function PokerTrainer() {
   const renderCard = (rank, suit) => {
     const suitSymbols = { h: '♥', d: '♦', s: '♠', c: '♣' }
     const suitColors = { 
-      h: '#e74c3c',  // Copas = Vermelho
-      d: '#3498db',  // Ouros = Azul
-      s: '#2c3e50',  // Espadas = Preto
-      c: '#27ae60'   // Paus = Verde
+      h: '#e74c3c',
+      d: '#3498db',
+      s: '#2c3e50',
+      c: '#27ae60'
     }
     
     return (
@@ -119,7 +136,6 @@ export default function PokerTrainer() {
   const parseHand = (hand) => {
     if (!hand) return []
     
-    // Exemplos: AKs, 72o, QQ
     const ranks = hand.replace(/[so]/g, '').split('')
     const suited = hand.includes('s')
     const pair = ranks[0] === ranks[1]
@@ -235,96 +251,26 @@ export default function PokerTrainer() {
 
         {/* Main Area */}
         <main className="trainer-main">
-          {/* Poker Table */}
-          <div className="poker-table-container">
-            <div className="poker-table">
-
-              {/* Positions */}
-              <div className="table-position utg">
-                {position !== 'UTG' && (
-                  <div className="villain-cards">
-                    <div className="card-back"></div>
-                    <div className="card-back"></div>
-                  </div>
-                )}
-                <div className={`position-marker ${position === 'UTG' ? 'active' : ''} ${aggressor === 'UTG' ? 'aggressor' : ''}`}>
-                  UTG
-                  <span className="stack">100bb</span>
+          {/* Poker Table - Compacta */}
+          <div className="poker-table-compact">
+            <div className="table-positions">
+              {['UTG', 'HJ', 'CO', 'BTN', 'SB', 'BB'].map(pos => (
+                <div 
+                  key={pos}
+                  className={`position-marker ${position === pos ? 'active' : ''} ${aggressor === pos ? 'aggressor' : ''}`}
+                >
+                  {pos}
                 </div>
-              </div>
-              <div className="table-position hj">
-                {position !== 'HJ' && (
-                  <div className="villain-cards">
-                    <div className="card-back"></div>
-                    <div className="card-back"></div>
-                  </div>
-                )}
-                <div className={`position-marker ${position === 'HJ' ? 'active' : ''} ${aggressor === 'HJ' ? 'aggressor' : ''}`}>
-                  HJ
-                  <span className="stack">100bb</span>
-                </div>
-              </div>
-              <div className="table-position co">
-                {position !== 'CO' && (
-                  <div className="villain-cards">
-                    <div className="card-back"></div>
-                    <div className="card-back"></div>
-                  </div>
-                )}
-                <div className={`position-marker ${position === 'CO' ? 'active' : ''} ${aggressor === 'CO' ? 'aggressor' : ''}`}>
-                  CO
-                  <span className="stack">100bb</span>
-                </div>
-              </div>
-              <div className="table-position btn">
-                {position !== 'BTN' && (
-                  <div className="villain-cards">
-                    <div className="card-back"></div>
-                    <div className="card-back"></div>
-                  </div>
-                )}
-                <div className={`position-marker ${position === 'BTN' ? 'active' : ''} ${aggressor === 'BTN' ? 'aggressor' : ''}`}>
-                  BTN
-                  <span className="stack">100bb</span>
-                </div>
-              </div>
-              <div className="table-position sb">
-                {position !== 'SB' && (
-                  <div className="villain-cards">
-                    <div className="card-back"></div>
-                    <div className="card-back"></div>
-                  </div>
-                )}
-                <div className={`position-marker ${position === 'SB' ? 'active' : ''} ${aggressor === 'SB' ? 'aggressor' : ''}`}>
-                  SB
-                  <span className="stack">100bb</span>
-                </div>
-              </div>
-              <div className="table-position bb">
-                {position !== 'BB' && (
-                  <div className="villain-cards">
-                    <div className="card-back"></div>
-                    <div className="card-back"></div>
-                  </div>
-                )}
-                <div className={`position-marker ${position === 'BB' ? 'active' : ''} ${aggressor === 'BB' ? 'aggressor' : ''}`}>
-                  BB
-                  <span className="stack">100bb</span>
-                </div>
-              </div>
-
-              {/* Cards */}
-              <div className="hero-cards">
-                {loading ? (
-                  <div className="loading">Carregando...</div>
-                ) : cards.length > 0 ? (
-                  <>
-                    {renderCard(cards[0].rank, cards[0].suit)}
-                    {renderCard(cards[1].rank, cards[1].suit)}
-                  </>
-                ) : null}
-              </div>
+              ))}
             </div>
+            
+            {/* Hero Cards */}
+            {currentHand && (
+              <div className="hero-cards-compact">
+                {renderCard(cards[0].rank, cards[0].suit)}
+                {renderCard(cards[1].rank, cards[1].suit)}
+              </div>
+            )}
           </div>
 
           {/* Situation */}
@@ -344,6 +290,13 @@ export default function PokerTrainer() {
               <p className="situation-text">Carregando...</p>
             )}
           </div>
+
+          {/* Range Grid */}
+          <RangeGrid 
+            ranges={allRanges}
+            currentHand={currentHand?.hand}
+            userAction={userAction}
+          />
 
           {/* Action Buttons */}
           <div className="action-buttons">

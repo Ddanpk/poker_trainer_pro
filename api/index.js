@@ -76,6 +76,41 @@ module.exports = async (req, res) => {
       });
     }
 
+    // All ranges (para visualização do grid)
+    if (pathname === '/api/training/all-ranges' && req.method === 'GET') {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const cenario = url.searchParams.get('cenario');
+      const posicao_ativa = url.searchParams.get('posicao_ativa');
+      const posicao_agressora = url.searchParams.get('posicao_agressora');
+
+      let query = 'SELECT hand, action FROM ranges WHERE 1=1';
+      const params = [];
+
+      if (cenario) {
+        query += ' AND cenario = ?';
+        params.push(cenario);
+      }
+      if (posicao_ativa) {
+        query += ' AND posicao_ativa = ?';
+        params.push(posicao_ativa);
+      }
+      if (posicao_agressora) {
+        query += ' AND posicao_agressora = ?';
+        params.push(posicao_agressora);
+      }
+
+      return new Promise((resolve) => {
+        db.all(query, params, (err, rows) => {
+          if (err) {
+            res.status(500).json({ error: err.message });
+          } else {
+            res.json(rows);
+          }
+          resolve();
+        });
+      });
+    }
+
     // Check action
     if (pathname === '/api/training/check-action' && req.method === 'POST') {
       const body = await getBody(req);
